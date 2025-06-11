@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==== لایه‌ی کامپوننت‌ها برای استفاده‌ی مجدد در کل پروژه ==== */
+@layer components {
+  /* ==== دکمه‌ها ==== */
+  .btn {
+    @apply px-4 py-2 rounded text-white font-medium transition duration-200 ease-in-out;
+  }
+
+  .btn-primary {
+    @apply btn bg-blue-600 hover:bg-blue-700;
+  }
+
+  .btn-secondary {
+    @apply btn bg-gray-600 hover:bg-gray-700;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-600 hover:bg-red-700;
+  }
+
+  /* ==== تیترها ==== */
+  .heading-xl {
+    @apply text-2xl font-bold text-gray-900 dark:text-white;
+  }
+
+  .heading-lg {
+    @apply text-xl font-semibold text-gray-800 dark:text-gray-100;
+  }
+
+  /* ==== کارت‌ها ==== */
+  .card {
+    @apply p-4 rounded-lg shadow bg-white dark:bg-gray-800;
+  }
+
+  /* ==== ورودی‌ها ==== */
+  .input {
+    @apply w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+
+  /* ==== جدول امتیازات ==== */
+  .leaderboard-row {
+    @apply flex justify-between py-2 px-4 border-b border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100;
+  }
+
+  .leaderboard-header {
+    @apply leaderboard-row font-bold bg-gray-100 dark:bg-gray-700;
+  }
+
+  /* ==== وضعیت‌ها ==== */
+  .status-success {
+    @apply text-green-600 dark:text-green-400;
+  }
+
+  .status-fail {
+    @apply text-red-600 dark:text-red-400;
+  }
+
+  /* ==== لینک‌ها ==== */
+  .link {
+    @apply text-blue-600 hover:underline dark:text-blue-400;
+  }
+}

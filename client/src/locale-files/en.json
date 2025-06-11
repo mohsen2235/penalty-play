@@ -1,0 +1,16 @@
+{
+  "welcome": "Welcome to the game!",
+  "start_game": "Start Game",
+  "wallet": "Wallet",
+  "balance": "Balance",
+  "play": "Play",
+  "settings": "Settings",
+  "language": "Language",
+  "deposit": "Deposit",
+  "withdraw": "Withdraw",
+  "logout": "Logout",
+  "game_over": "Game Over",
+  "you_win": "You Win!",
+  "you_lose": "You Lose!",
+  "try_again": "Try Again"
+}
