@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const https = require('https');
 const fs = require('fs');
@@ -23,8 +23,9 @@ app.use('/transactions', apiLimiter, jwtMiddleware, txRoutes);
 app.use('/achievements', apiLimiter, jwtMiddleware, achRoutes);
 
 const server = https.createServer({
-  key: fs.readFileSync('./certs/key.pem'),
-  cert: fs.readFileSync('./certs/cert.pem')
+  // مسیر گواهی‌ها برای تست لوکال (بعداً برای VPS تغییر می‌کنه)
+  key: fs.readFileSync(process.env.KEY_PATH || './certs/key.pem'),
+  cert: fs.readFileSync(process.env.CERT_PATH || './certs/cert.pem')
 }, app);
 
 setupSocket(server);
@@ -47,4 +48,8 @@ bot.on('message', msg => {
   }
 });
 
-server.listen(process.env.PORT, () => console.log('Server on', process.env.PORT));
+// پورت 3000 برای تست لوکال
+app.listen(3000, () => console.log('Local server running on port 3000'));
+
+// پورت 443 برای HTTPS (VPS)
+server.listen(process.env.PORT || 443, () => console.log('HTTPS server running on port', process.env.PORT || 443));
