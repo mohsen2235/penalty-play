@@ -1,4 +1,4 @@
-require('dotenv').config({ path: __dirname + '/../.env' }); // لود dotenv با مسیر ریشه از دید services
+require('dotenv').config({ path: __dirname + '/../../.env' }); // لود از ریشه پروژه
 const TronWeb = require('tronweb');
 
 const fullHost = process.env.NODE_ENV === 'production'

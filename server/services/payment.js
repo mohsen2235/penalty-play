@@ -1,4 +1,4 @@
-require('dotenv').config({ path: __dirname + '/../.env' }); // لود dotenv با مسیر ریشه
+require('dotenv').config({ path: __dirname + '/../../.env' }); // لود از ریشه پروژه
 const { sendUSDT } = require('./tron');
 const feeWallet = process.env.GAME_FEE_WALLET;
 const feePercent = parseFloat(process.env.GAME_FEE_PERCENT);
