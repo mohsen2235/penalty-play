@@ -1,3 +1,5 @@
+require('dotenv').config();
+console.log('DB_PASS:', process.env.DB_PASS, typeof process.env.DB_PASS);
 const { Pool } = require('pg');
 module.exports = new Pool({
   host: process.env.DB_HOST,

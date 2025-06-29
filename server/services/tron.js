@@ -1,5 +1,5 @@
 require('dotenv').config({ path: __dirname + '/../../.env' }); // لود از ریشه پروژه
-const TronWeb = require('tronweb');
+const { TronWeb } = require('tronweb'); // destructure TronWeb
 
 const fullHost = process.env.NODE_ENV === 'production'
   ? 'https://api.trongrid.io'
