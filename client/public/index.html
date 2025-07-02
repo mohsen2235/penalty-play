@@ -2,11 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Penalty 3D</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Penalty & Chess 3D</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #root { width: 100vw; height: 100vh; }
+  </style>
 </head>
 <body>
   <div id="root"></div>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    // دریافت پارامتر بازی از URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const game = urlParams.get('game') || 'penalty'; // پیش‌فرض پنالتی
+
+    // اتصال به سرور Socket.io
+    const socket = io('http://localhost:3000', {
+      path: game === 'chess' ? '/chess' : '/game'
+    });
+
+    // آماده‌سازی برای رندر سه‌بعدی (باید در فایل JS جداگانه گسترش پیدا کنه)
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('root').appendChild(renderer.domElement);
+
+    camera.position.z = 5;
+
+    // دریافت داده از تلگرام
+    Telegram.WebApp.ready();
+    const webAppData = Telegram.WebApp.initData;
+    if (webAppData) {
+      socket.emit('webData', { game, data: webAppData });
+    }
+
+    // دریافت داده‌های بازی از سرور
+    socket.on('gameState', (data) => {
+      console.log('Game state received:', data);
+      // اینجا رندر سه‌بعدی رو بر اساس data.board پیاده‌سازی می‌کنیم
+    });
+
+    socket.on('movePiece', (data) => {
+      console.log('Move received:', data);
+      // به‌روزرسانی رندر سه‌بعدی
+    });
+
+    socket.on('checkmate', (data) => {
+      console.log('Checkmate:', data);
+      // نمایش پایان بازی
+    });
+
+    socket.on('betPlaced', (data) => {
+      console.log('Bet placed:', data);
+      // به‌روزرسانی UI شرط‌بندی
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
 </body>
 </html>
