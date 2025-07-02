@@ -10,17 +10,29 @@ const userRoutes = require('./routes/user');
 const txRoutes = require('./routes/transaction');
 const achRoutes = require('./routes/achievements');
 const setupSocket = require('./socket');
-const chessModule = require('./chess'); // برای شطرنج
-const bettingModule = require('./betting'); // برای شرط‌بندی
+const chessModule = require('./chess');
+const bettingModule = require('./betting');
+
+// چک متغیرهای محیطی
+if (!process.env.WEBAPP_URL || !process.env.BOT_TOKEN) {
+  console.error('Missing required environment variables: WEBAPP_URL or BOT_TOKEN');
+  process.exit(1);
+}
 
 const app = express();
 app.use(cors());
 app.use('/uploads', express.static('uploads'));
 app.use(express.json());
 
+// میدلور لاگ درخواست
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // Endpoint انتخاب بازی
 app.get('/select-game', (req, res) => {
-  const game = req.query.game; // ?game=penalty یا ?game=chess
+  const game = req.query.game;
   if (!game || !['penalty', 'chess'].includes(game)) {
     return res.status(400).json({ error: 'Invalid game. Use "penalty" or "chess"' });
   }
@@ -54,7 +66,7 @@ const server = https.createServer({
 
 // راه‌اندازی Socket.io برای پنالتی و شطرنج
 setupSocket(server);
-chessModule(server); // راه‌اندازی namespace شطرنج
+chessModule(server);
 
 const TelegramBot = require('node-telegram-bot-api');
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
@@ -75,6 +87,8 @@ bot.on('message', (msg) => {
     const data = JSON.parse(msg.web_app_data.data);
     const gameNS = data.game === 'chess' ? server.of('/chess') : server.of('/game');
     gameNS.to(msg.chat.id).emit('webData', data);
+    // اضافه کردن داده‌های سه‌بعدی (اگه کلاینت بفرسته)
+    if (data.position) gameNS.to(msg.chat.id).emit('3dPosition', data.position);
   }
 });
 
@@ -86,4 +100,3 @@ app.listen(process.env.PORT || 3000, () => console.log(`Server running on port $
 server.listen(process.env.PORT || 443, () => {
   console.log('HTTPS server running on port', process.env.PORT || 443);
 });
-*/
