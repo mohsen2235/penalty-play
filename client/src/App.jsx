@@ -1,7 +1,8 @@
-// src/App.jsx
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import ProfilePage from './components/ProfilePage';
-import Game3D from './components/3D/Game3D';
+import Game3D from './components/3D/Game3D'; // پنالتی
+import Chess3D from './components/3D/Chess3D'; // شطرنج
 import ChatBox from './components/UI/ChatBox';
 import NotificationsBox from './components/UI/NotificationsBox';
 import CinematicButton from './components/UI/CinematicButton';
@@ -17,6 +18,13 @@ export default function App() {
   const tg = window.Telegram?.WebApp;
   if (tg) { tg.ready(); tg.expand(); }
 
+  // انتخاب بازی بر اساس پارامتر URL
+  const { search } = useLocation();
+  const urlParams = new URLSearchParams(search);
+  const game = urlParams.get('game') || 'penalty'; // پیش‌فرض پنالتی
+
+  const GameComponent = game === 'chess' ? Chess3D : Game3D;
+
   return (
     <div className="app-container dark:bg-gray-800 min-h-screen">
       {/* پروفایل و کیف پول */}
@@ -29,7 +37,7 @@ export default function App() {
 
       {/* بخش بازی و ابزارها */}
       <div className="game-area relative">
-        <Game3D />
+        <GameComponent /> {/* رندر پنالتی یا شطرنج بر اساس game */}
         <div className="hud top-4 left-4 flex space-x-2">
           <CinematicButton onClick={() => {/* زاویه دوربین */}} />
           <ReplayButton onClick={() => {/* بازپخش */}} />
@@ -46,4 +54,5 @@ export default function App() {
     </div>
   );
 }
+
 import './styles/tailwind.css';
