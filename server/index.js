@@ -10,46 +10,80 @@ const userRoutes = require('./routes/user');
 const txRoutes = require('./routes/transaction');
 const achRoutes = require('./routes/achievements');
 const setupSocket = require('./socket');
+const chessModule = require('./chess'); // برای شطرنج
+const bettingModule = require('./betting'); // برای شرط‌بندی
 
 const app = express();
 app.use(cors());
 app.use('/uploads', express.static('uploads'));
 app.use(express.json());
 
+// Endpoint انتخاب بازی
+app.get('/select-game', (req, res) => {
+  const game = req.query.game; // ?game=penalty یا ?game=chess
+  if (!game || !['penalty', 'chess'].includes(game)) {
+    return res.status(400).json({ error: 'Invalid game. Use "penalty" or "chess"' });
+  }
+  res.json({ game, message: 'Game selected successfully' });
+});
+
+// روت‌های API
 app.use('/auth', apiLimiter, authRoutes);
 app.use('/game', apiLimiter, jwtMiddleware, gameRoutes);
 app.use('/user', apiLimiter, jwtMiddleware, userRoutes);
 app.use('/transactions', apiLimiter, jwtMiddleware, txRoutes);
 app.use('/achievements', apiLimiter, jwtMiddleware, achRoutes);
 
-const server = https.createServer({
-  // مسیر گواهی‌ها برای تست لوکال (بعداً برای VPS تغییر می‌کنه)
-  key: fs.readFileSync(process.env.KEY_PATH || './certs/key.pem'),
-  cert: fs.readFileSync(process.env.CERT_PATH || './certs/cert.pem')
-}, app);
-
-setupSocket(server);
-
-const TelegramBot = require('node-telegram-bot-api');
-const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
-bot.onText(/\/play/, msg => {
-  bot.sendMessage(msg.chat.id, '🎮 Play 3D Penalty', {
-    reply_markup: {
-      inline_keyboard: [[
-        { text: 'Play', web_app: { url: process.env.WEBAPP_URL } }
-      ]]
-    }
-  });
-});
-bot.on('message', msg => {
-  if (msg.web_app_data) {
-    const data = JSON.parse(msg.web_app_data.data);
-    server.of('/game').to(msg.chat.id).emit('webData', data);
+// تست دیتابیس
+app.get('/test-db', async (req, res) => {
+  try {
+    const { Pool } = require('./db');
+    const pool = new Pool();
+    const result = await pool.query('SELECT NOW()');
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).send(err.message);
   }
 });
 
-// پورت 3000 برای تست لوکال
-app.listen(3000, () => console.log('Local server running on port 3000'));
+const server = https.createServer({
+  // مسیر گواهی‌ها (فعلاً کامنت شده برای تست بدون SSL)
+  // key: fs.readFileSync(process.env.KEY_PATH || './certs/key.pem'),
+  // cert: fs.readFileSync(process.env.CERT_PATH || './certs/cert.pem')
+}, app);
 
-// پورت 443 برای HTTPS (VPS)
-server.listen(process.env.PORT || 443, () => console.log('HTTPS server running on port', process.env.PORT || 443));
+// راه‌اندازی Socket.io برای پنالتی و شطرنج
+setupSocket(server);
+chessModule(server); // راه‌اندازی namespace شطرنج
+
+const TelegramBot = require('node-telegram-bot-api');
+const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
+bot.onText(/\/play/, (msg) => {
+  bot.sendMessage(msg.chat.id, '🎮 Choose your game:', {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: 'Penalty', web_app: { url: `${process.env.WEBAPP_URL}?game=penalty` } },
+          { text: 'Chess', web_app: { url: `${process.env.WEBAPP_URL}?game=chess` } }
+        ]
+      ]
+    }
+  });
+});
+bot.on('message', (msg) => {
+  if (msg.web_app_data) {
+    const data = JSON.parse(msg.web_app_data.data);
+    const gameNS = data.game === 'chess' ? server.of('/chess') : server.of('/game');
+    gameNS.to(msg.chat.id).emit('webData', data);
+  }
+});
+
+// پورت 3000 برای HTTP (تست بدون SSL)
+app.listen(process.env.PORT || 3000, () => console.log(`Server running on port ${process.env.PORT || 3000}`));
+
+// پورت 443 برای HTTPS (فعلاً غیرفعال)
+/*
+server.listen(process.env.PORT || 443, () => {
+  console.log('HTTPS server running on port', process.env.PORT || 443);
+});
+*/

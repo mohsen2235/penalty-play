@@ -1,23 +1,27 @@
 const { Server } = require('socket.io');
+const chessModule = require('./chess'); // برای شطرنج
+const bettingModule = require('./betting'); // برای شرط‌بندی
 
 module.exports = (server) => {
   const io = new Server(server, {
     cors: { origin: process.env.NODE_ENV === 'development' ? '*' : process.env.WEBAPP_URL }, // CORS پویا
   });
-  const gameNS = io.of('/game');
+  const gameNS = io.of('/game'); // برای پنالتی
+  const chessNS = chessModule(server); // برای شطرنج
 
+  // منطق پنالتی
   gameNS.on('connection', (socket) => {
     console.log('User connected to /game namespace:', socket.id);
 
     socket.on('join', (gameId) => {
       if (!gameId) return socket.emit('error', 'Game ID is required');
       socket.join(gameId);
-      socket.emit('joined', { gameId, message: 'Joined game successfully' });
+      socket.emit('joined', { gameId, message: 'Joined penalty game' });
     });
 
     socket.on('joinQueue', (data) => {
       if (!data || !data.userId) return socket.emit('error', 'User ID is required');
-      io.emit('queueUpdate', { userId: data.userId, timestamp: Date.now() }); // داده نمونه
+      io.emit('queueUpdate', { userId: data.userId, timestamp: Date.now() });
     });
 
     socket.on('sendChallenge', (data) => {
@@ -48,6 +52,18 @@ module.exports = (server) => {
     socket.on('gameUpdate', (data) => {
       if (!data || !data.gameId) return socket.emit('error', 'Game ID is required');
       gameNS.emit('gameUpdate', { gameId: data.gameId, ...data });
+    });
+
+    socket.on('placeBet', async (data) => {
+      if (!data || !data.gameId || !data.userId || !data.amount) {
+        return socket.emit('error', 'Game ID, User ID, and amount are required');
+      }
+      try {
+        const result = await bettingModule.placeBet(data.gameId, data.userId, data.amount);
+        socket.emit('betPlaced', result);
+      } catch (err) {
+        socket.emit('error', err.message);
+      }
     });
 
     socket.on('disconnect', () => {
